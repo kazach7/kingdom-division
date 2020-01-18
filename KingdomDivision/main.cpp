@@ -2,27 +2,36 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <sstream>
+
+typedef unsigned long long ULL;
 
 std::vector<Node*> nodes; // Vector of all nodes
 Node* root;               // Pointer to the root node
 
 // Calculate combinations for a subtree with given root 'r', parent of which is 'parent'.
-std::pair<int, int> calcForSubtree(Node* r, Node* parent, int level);
+std::pair<ULL, ULL> calcForSubtree(Node* r, Node* parent);
 // Recurrent function to add up multiplications of all possibilities for all children (see below).
-int mul(int offset, std::vector<int> combinationsWhenChildWhite, std::vector<int> combinationsWhenChildBlack);
+ULL mul(ULL offset, std::vector<ULL> combinationsWhenChildWhite, std::vector<ULL> combinationsWhenChildBlack);
 
-int main()
+int main(int argc, char* argv[])
 {
 	std::ifstream file;
 	std::string filepath;
-
-	std::cout << "Enter path to file with the tree:" << std::endl;
-	std::cin >> filepath;
+	
+	if (argc < 2)
+	{
+		std::cout << "Enter path to the file with tree:" << std::endl;
+		std::cin >> filepath;
+	}
+	else
+	{
+		filepath = argv[1];
+	}
+	
 	file.open(filepath);
 	if (!file)
 	{
-		std::cerr << "Unable to open the file.";
+		std::cerr << "Unable to open the file." << std::endl;
 		return 1;
 	}
 
@@ -45,7 +54,7 @@ int main()
 
 		if (first > treeSize || second > treeSize)
 		{
-			std::cerr << "Nodes numbers must be between 1 and " << treeSize;
+			std::cerr << "Nodes numbers must be between 1 and " << treeSize << std::endl;
 			return 1;
 		}
 		nodes[first - 1]->addNeighbour(nodes[second - 1]);
@@ -54,18 +63,19 @@ int main()
 
 	if (treeSize == 1)
 	{
-		std::cout << 2;
+		std::cout << 2 << std::endl;
 		return 0;
 	}
 	if (treeSize == 2)
 	{
 		if (nodes[0]->getNeighboursSize() == 1)
 		{
-			std::cout << 2;
+			std::cout << 2 << std::endl;
+			return 0;
 		}
 		else
 		{
-			std::cerr << "A tree is connected by definition!";
+			std::cerr << "A tree is connected by definition!" << std::endl;
 			return 1;
 		}
 	}
@@ -75,18 +85,16 @@ int main()
 		if (i == treeSize)
 		{
 			// We didn't find any non-leaf.
-			std::cerr << "A tree is connected by definition!";
+			std::cerr << "A tree is connected by definition!" << std::endl;
 			return 1;
 		}
 		root = nodes[i++];
 	} while (root->getNeighboursSize() <= 1);
 
-	std::cout << "Root node: " << i << std::endl;
-
 	// Calculate and display the number of possible combinations
-	std::pair <int, int> result = calcForSubtree(root, nullptr, 1);
-	std::cout << 2 * result.second; // We only count cases when at least one child of the whole tree root
-									// has the same color as the root.
+	std::pair <ULL, ULL> result = calcForSubtree(root, nullptr);
+	std::cout << 2 * result.second << std::endl; // We only count cases when at least one child of the whole tree root
+									             // has the same color as the root.
 
 	// Clean up
 	for (auto node : nodes)
@@ -100,19 +108,13 @@ int main()
 // Calculate possible combinations for a subtree with given root 'r', parent of which is 'parent'.
 // We calculate assuming that r is white. This is why at the very root of the whole tree we will have to multiply
 // all combinations by two.
-std::pair<int, int> calcForSubtree(Node* r, Node* parent, int level)
+std::pair<ULL, ULL> calcForSubtree(Node* r, Node* parent)
 {
-	std::stringstream space;
-	for (int i = 0; i < level - 1; ++i)
-	{
-		space << " ";
-	}
-	std::cout << space.str() << "Level " << level << std::endl;
-	int returnAllChildrenBlack;    // Number of combinations for this subtree given that all children of r are black
-	int returnNotAllChildrenBlack; // Number of combinations for this subtreee given that at least 1 child of r is white
+	ULL returnAllChildrenBlack;    // Number of combinations for this subtree given that all children of r are black
+	ULL returnNotAllChildrenBlack; // Number of combinations for this subtreee given that at least 1 child of r is white
 
-	std::vector <int> combinationsWhenChildBlack; // Numbers of combinations for every child's subtree given that the child is black
-	std::vector <int> combinationsWhenChildWhite; // Numbers of combinations for every child's subtree given that the child is white
+	std::vector <ULL> combinationsWhenChildBlack; // Numbers of combinations for every child's subtree given that the child is black
+	std::vector <ULL> combinationsWhenChildWhite; // Numbers of combinations for every child's subtree given that the child is white
 
 	// Calculate possibilities for all children
 	for (size_t i = 0; i < r->getNeighboursSize(); ++i)
@@ -126,7 +128,6 @@ std::pair<int, int> calcForSubtree(Node* r, Node* parent, int level)
 		// If the child is a leaf
 		if (r->getNeighbour(i)->getNeighboursSize() == (size_t) 1)
 		{
-			std::cout << space.str() << "Leaf detected\n";
 			// It must have the same color as its parent (i.e. white, assuming that r is white).
 			combinationsWhenChildBlack.push_back(0);
 			combinationsWhenChildWhite.push_back(1);
@@ -134,9 +135,8 @@ std::pair<int, int> calcForSubtree(Node* r, Node* parent, int level)
 		// If the child is not a leaf
 		else
 		{
-			std::cout << space.str() << "Non-leaf detected\n";
 			// Calculate in the deeper subtree
-			std::pair<int, int> result = calcForSubtree(r->getNeighbour(i), r, level+1);
+			std::pair<ULL, ULL> result = calcForSubtree(r->getNeighbour(i), r);
 
 			// Case: r white, child black
 			// The children of the child can't be all in different color than the child.
@@ -156,7 +156,7 @@ std::pair<int, int> calcForSubtree(Node* r, Node* parent, int level)
 
 	// Calculate combinations when all children are black.
 	returnAllChildrenBlack = 1;
-	for (int i : combinationsWhenChildBlack)
+	for (ULL i : combinationsWhenChildBlack)
 	{
 		returnAllChildrenBlack *= i;
 	}
@@ -168,14 +168,13 @@ std::pair<int, int> calcForSubtree(Node* r, Node* parent, int level)
 		+ combinationsWhenChildBlack[0] * mul(1, combinationsWhenChildWhite, combinationsWhenChildBlack);
 	returnNotAllChildrenBlack -= returnAllChildrenBlack;
 
-	std::cout << space.str() << "All children black: " << returnAllChildrenBlack << ", not all: " << returnNotAllChildrenBlack << std::endl;
-	return std::pair<int, int>(returnAllChildrenBlack, returnNotAllChildrenBlack);
+	return std::pair<ULL, ULL>(returnAllChildrenBlack, returnNotAllChildrenBlack);
 }
 
 // Recurrent function to add up multiplications of all possibilites for all children.
 // Example: if we have 3 children, each can be black or white and we want to multiply all posibilities
 // (and add them). We will perform 2^3 multiplications.
-int mul(int offset, std::vector<int> combinationsWhenChildWhite, std::vector<int> combinationsWhenChildBlack)
+ULL mul(ULL offset, std::vector<ULL> combinationsWhenChildWhite, std::vector<ULL> combinationsWhenChildBlack)
 {
 	if (offset == combinationsWhenChildWhite.size())
 	{
