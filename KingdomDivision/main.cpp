@@ -15,51 +15,77 @@ ULL mul(ULL offset, std::vector<ULL> combinationsWhenChildWhite, std::vector<ULL
 
 int main(int argc, char* argv[])
 {
-	std::ifstream file;
-	std::string filepath;
-	
-	if (argc < 2)
+	//std::ifstream file;
+	//std::string filepath;
+	size_t treeSize;
+
+	if (argc < 3 || strcmp(argv[1], "-m") != 0)
 	{
-		std::cout << "Enter path to the file with tree:" << std::endl;
-		std::cin >> filepath;
-	}
-	else
-	{
-		filepath = argv[1];
+		std::cout << "usage: kingdom-division -m MODE_NUM [params]" << std::endl;
+		return 1;
 	}
 	
-	file.open(filepath);
-	if (!file)
+	char mode = *argv[2];
+
+	switch (mode)
 	{
-		std::cerr << "Unable to open the file." << std::endl;
+	case '1':
+		/* Read the tree from the standard input */
+		std::cin >> treeSize;
+
+		for (size_t i = 0; i < treeSize; ++i)
+		{
+			nodes.push_back(new Node);
+		}
+
+		// Read connections
+		size_t first, second;
+		while (true)
+		{
+			std::cin >> first;
+			if (std::cin.eof()) break;
+			std::cin >> second;
+
+			if (first > treeSize || second > treeSize)
+			{
+				std::cerr << "Nodes numbers must be between 1 and " << treeSize << std::endl;
+				return 1;
+			}
+			nodes[first - 1]->addNeighbour(nodes[second - 1]);
+			nodes[second - 1]->addNeighbour(nodes[first - 1]);
+		}
+		break;
+	case 2:
+		if (strcmp(argv[3], "-n") != 0)
+		{
+			std::cerr << "usage: kingdom-division -m 2 -n N_VERTICES" << std::endl;
+			return 1;
+		}
+
+		treeSize = static_cast<int>(*argv[4]);
+
+		//generateTree(treeSize);
+		break;
+	case 3:
+		break;
+	default:
+		std::cerr << "Mode number must be 1, 2 or 3" << std::endl;
 		return 1;
 	}
 
+	std::cout << "Tree size: " << treeSize << std::endl;
+	return 0;
+//	file.open(filepath);
+	//if (!file)
+	//{
+		std::cerr << "Unable to open the file." << std::endl;
+		return 1;
+	//}
+
 	// Read the number of nodes
-	size_t treeSize;
-	file >> treeSize;
+	//size_t treeSize;
+	//file >> treeSize;
 
-	for (size_t i = 0; i < treeSize; ++i)
-	{
-		nodes.push_back(new Node);
-	}
-
-	// Read connections
-	size_t first, second;
-	while (true)
-	{
-		file >> first;
-		if (file.eof()) break;
-		file >> second;
-
-		if (first > treeSize || second > treeSize)
-		{
-			std::cerr << "Nodes numbers must be between 1 and " << treeSize << std::endl;
-			return 1;
-		}
-		nodes[first - 1]->addNeighbour(nodes[second - 1]);
-		nodes[second - 1]->addNeighbour(nodes[first - 1]);
-	}
 
 	if (treeSize == 1)
 	{
