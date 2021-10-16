@@ -1,4 +1,4 @@
-Kingdom Division
+# Kingdom Division
 
 Graph algorithm that is a solution to the following problem:
 
